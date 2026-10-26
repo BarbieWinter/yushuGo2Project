@@ -1,0 +1,7 @@
+2026-10-26 13:47:25,655 INFO event=session_start interface=en8
+2026-10-26 13:56:23,833 INFO event=session_start interface=en8
+2026-10-26 13:58:25,325 INFO event=session_end
+2026-10-26 13:59:28,640 INFO event=session_start interface=en8
+2026-10-26 13:59:31,573 INFO event=session_end
+2026-10-26 14:03:08,272 INFO event=session_start interface=en8
+2026-10-26 14:03:35,707 INFO event=session_end

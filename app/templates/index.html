@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e12">
+  <title>机器狗控制台</title>
+  <script>
+    if (location.pathname === "/patrol") {
+      document.documentElement.className = "patrol-page";
+      document.title = "机器狗巡逻";
+    } else if (location.pathname === "/settings") {
+      document.documentElement.className = "settings-page";
+      document.title = "机器狗设置";
+    }
+  </script>
+  <link rel="stylesheet" href="/static/style.css?v=20260913-1">
+</head>
+<body>
+  <header class="topbar">
+    <nav class="page-nav" aria-label="页面导航">
+      <a href="/">遥控</a>
+      <a href="/patrol">巡逻</a>
+      <a href="/settings">设置</a>
+    </nav>
+    <div class="connection">
+      <span id="connection-dot" class="dot"></span>
+      <strong id="connection-text">连接中</strong>
+      <span id="mode-header">模式 --</span>
+    </div>
+    <button id="stop" class="emergency" type="button">立即停止 <kbd>Space</kbd></button>
+  </header>
+
+  <div class="status-strip">
+    <output id="command-status">控制就绪</output>
+    <output id="patrol-status">巡逻：未运行</output>
+  </div>
+
+  <main class="dashboard">
+    <section class="overview">
+      <div class="camera-panel">
+        <img id="camera" alt="Go2 前置摄像头实时画面">
+        <span id="camera-status">● 前置摄像头</span>
+        <span class="camera-format">LIVE · MJPEG</span>
+      </div>
+
+      <section class="telemetry" aria-labelledby="telemetry-title">
+        <h1 id="telemetry-title">实时遥测</h1>
+        <dl>
+          <div><dt>电池电量</dt><dd id="battery">--</dd></div>
+          <div><dt>运动模式</dt><dd id="mode">--</dd></div>
+          <div><dt>步态</dt><dd id="gait">--</dd></div>
+          <div><dt>位置 x / y / z</dt><dd id="position">--</dd></div>
+          <div><dt>速度 vx / vy / vz</dt><dd id="velocity">--</dd></div>
+          <div><dt>偏航角速度</dt><dd id="yaw-speed">--</dd></div>
+          <div><dt>机身高度</dt><dd id="body-height">--</dd></div>
+          <div><dt>姿态 roll / pitch / yaw</dt><dd id="imu">--</dd></div>
+          <div><dt>雷达距离</dt><dd id="radar-range">--</dd></div>
+          <div><dt>足端力</dt><dd id="foot-force">--</dd></div>
+          <div><dt>最高电机温度</dt><dd id="motor-temp">--</dd></div>
+        </dl>
+      </section>
+    </section>
+
+    <section class="control-deck" aria-label="机器人控制">
+      <div class="control-group move-control">
+        <h2>移动控制 <span>X / Y</span></h2>
+        <div id="move-joystick" class="joystick" aria-label="平移虚拟摇杆">
+          <span class="axis axis-up">前进</span>
+          <span class="axis axis-down">后退</span>
+          <span class="axis axis-left">左移</span>
+          <span class="axis axis-right">右移</span>
+          <span class="joystick-ring"></span>
+          <span class="joystick-knob"></span>
+        </div>
+        <output id="move-output">vx 0.00 · vy 0.00</output>
+      </div>
+
+      <div class="control-group speed-control">
+        <h2>速度选择</h2>
+        <div class="speed-options" role="group" aria-label="速度选择">
+          <button type="button" data-speed="slow"><strong>慢速</strong><span>0.30 m/s</span></button>
+          <button type="button" data-speed="normal" class="selected"><strong>标准</strong><span id="normal-speed-label">0.50 m/s</span></button>
+        </div>
+        <a class="settings-link" href="/settings#motion-settings">调整标准速度</a>
+      </div>
+
+      <div class="control-group yaw-control">
+        <h2>偏航控制 <span>Yaw</span></h2>
+        <div id="yaw-joystick" class="joystick yaw" aria-label="旋转虚拟摇杆">
+          <span class="axis axis-left">左转</span>
+          <span class="axis axis-right">右转</span>
+          <span class="joystick-ring"></span>
+          <span class="joystick-knob"></span>
+        </div>
+        <output id="yaw-output">yaw 0.00</output>
+      </div>
+
+      <div class="control-group action-control">
+        <h2>动作控制</h2>
+        <div class="action-grid">
+          <button type="button" data-action="/api/stand">起立</button>
+          <button type="button" data-action="/api/balance_stand">平衡站立</button>
+          <button type="button" data-action="/api/stand_down">卧倒</button>
+          <button type="button" data-action="/api/sit">坐下</button>
+          <button type="button" data-action="/api/rise_sit">坐姿起身</button>
+          <button type="button" data-action="/api/recovery">恢复站立</button>
+          <button type="button" data-action="/api/hello">打招呼</button>
+          <button type="button" data-action="/api/stretch">拉伸</button>
+          <button type="button" data-action="/api/heart">爱心</button>
+          <button id="handstand-toggle" type="button" aria-pressed="false">倒立</button>
+          <button type="button" data-action="/api/scrape">拜年</button>
+          <button type="button" data-action="/api/front_jump">前跳</button>
+          <button type="button" data-action="/api/cross_step">交叉步</button>
+          <button id="remote-patrol-toggle" class="remote-patrol" type="button">开始巡逻</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="patrol-planner" aria-labelledby="patrol-title">
+      <div class="patrol-heading">
+        <div>
+          <h2 id="patrol-title">巡逻路径</h2>
+          <p>巡逻不自动避障；定角转向读取 IMU，无转角反馈时使用“校准秒”。</p>
+        </div>
+        <div class="patrol-buttons">
+          <button type="button" data-add-patrol="forward">＋前进</button>
+          <button type="button" data-add-patrol="forward_distance">＋前进距离</button>
+          <button type="button" data-add-patrol="backward_distance">＋后退距离</button>
+          <button type="button" data-add-patrol="turn_left_90">＋左转90°</button>
+          <button type="button" data-add-patrol="turn_right_90">＋右转90°</button>
+          <button type="button" data-add-patrol="turn_left_180">＋左转180°</button>
+          <button type="button" data-add-patrol="turn_right_180">＋右转180°</button>
+          <button type="button" data-add-patrol="wait">＋等待</button>
+          <button id="save-patrol-path" type="button">保存路径</button>
+          <button id="start-patrol" type="button">开始巡逻</button>
+          <button type="button" data-action="/api/patrol/stop">停止巡逻</button>
+        </div>
+      </div>
+      <div id="patrol-steps" class="patrol-steps"></div>
+    </section>
+
+    <section class="settings-panel" aria-labelledby="settings-title">
+      <div class="settings-heading">
+        <div>
+          <p class="eyebrow">SYSTEM CONFIGURATION</p>
+          <h1 id="settings-title">设备设置</h1>
+          <p>调整运动参数、扬声器音量并管理机器狗音频。</p>
+        </div>
+        <span class="settings-scope">保存到当前设备</span>
+      </div>
+
+      <div class="settings-grid">
+        <section id="motion-settings" class="settings-card" aria-labelledby="motion-title">
+          <div class="card-heading">
+            <div><h2 id="motion-title">运动参数</h2><p>用于标准速度与巡逻速度。</p></div>
+            <span class="card-tag">本机浏览器</span>
+          </div>
+          <form id="speed-settings" class="settings-form">
+            <label for="normal-vx">标准前进速度</label>
+            <div class="input-unit"><input id="normal-vx" type="number" min="0.01" step="any" value="0.50" inputmode="decimal"><span>m/s</span></div>
+            <label for="normal-vyaw">标准转向速度</label>
+            <div class="input-unit"><input id="normal-vyaw" type="number" min="0.01" step="any" value="1.00" inputmode="decimal"><span>rad/s</span></div>
+            <div class="form-actions">
+              <button type="submit" class="primary-button">保存速度</button>
+              <output id="speed-save-status" role="status" aria-live="polite"></output>
+            </div>
+          </form>
+        </section>
+
+        <section class="settings-card" aria-labelledby="volume-title">
+          <div class="card-heading">
+            <div><h2 id="volume-title">扬声器音量</h2><p>直接写入机器狗 VUI。</p></div>
+            <span class="card-tag">0—10</span>
+          </div>
+          <form id="volume-settings" class="volume-settings">
+            <label for="speaker-volume">音量等级</label>
+            <div class="range-row">
+              <input id="speaker-volume" type="range" min="0" max="10" step="1" value="6">
+              <output id="speaker-volume-value" for="speaker-volume">6</output>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="primary-button">应用音量</button>
+              <output id="volume-status" role="status" aria-live="polite">正在读取…</output>
+            </div>
+          </form>
+        </section>
+
+        <section class="settings-card audio-settings" aria-labelledby="audio-title">
+          <div class="card-heading">
+            <div><h2 id="audio-title">音频管理</h2><p>上传 WAV 后可通过机器狗扬声器播放。</p></div>
+            <div class="audio-toolbar">
+              <button id="reload-audio" type="button">刷新列表</button>
+              <button id="stop-audio" type="button" class="danger-button">停止播放</button>
+            </div>
+          </div>
+          <form id="audio-upload" class="audio-upload">
+            <label for="audio-name">音频名称</label>
+            <input id="audio-name" name="name" type="text" maxlength="64" required placeholder="例如：welcome">
+            <label for="audio-file">WAV 文件</label>
+            <input id="audio-file" name="file" type="file" accept="audio/wav,.wav" required>
+            <button id="upload-audio" type="submit" class="primary-button">上传音频</button>
+            <p class="field-help">单声道 · 16-bit PCM · 16000 Hz · 最长 60 秒 · 不超过 2 MB</p>
+          </form>
+          <output id="audio-status" class="audio-status" role="status" aria-live="polite">正在读取音频列表…</output>
+          <ul id="audio-list" class="audio-list" aria-label="已上传音频"></ul>
+        </section>
+      </div>
+    </section>
+
+    <aside class="keyboard-help">
+      <strong>键盘控制</strong>
+      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 平移</span>
+      <span><kbd>Q</kbd><kbd>E</kbd> 左右转</span>
+      <span><kbd>Space</kbd> 立即停止</span>
+    </aside>
+  </main>
+
+  <script src="/static/app.js?v=20260913-1" defer></script>
+</body>
+</html>
+
