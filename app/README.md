@@ -18,6 +18,11 @@ make dev
 IFACE=en8 make dev
 ```
 
+Windows 原生环境需要 Git Bash 或 MSYS2 提供 `sh`、`make`、`uv`，接口名用 `IFACE="Ethernet"` 覆盖。
+机器人 SDK 和 CycloneDDS 建议在 WSL2 中运行，WSL 内按 Linux 方式执行同样的 `make install` / `make dev`。
+
+`make start` 与 `make dev` 等价。
+
 默认监听 `127.0.0.1:8000`。远程使用 SSH 隧道后访问本机 8000 端口：
 
 ```bash
