@@ -1,8 +1,12 @@
 import math
 import os
 
+from netiface import detect_robot_iface
 
-GO2_IFACE = os.getenv("GO2_IFACE", "eth0")
+
+# GO2_IFACE 显式设置时优先使用；否则自动查找机器人网段的网卡，仍找不到则为
+# None，由 CycloneDDS 自行选择。换电脑不需要改网卡名。
+GO2_IFACE = detect_robot_iface()
 MAX_VX = max(0.05, float(os.getenv("MAX_VX", "0.50")))
 MAX_VY = max(0.05, float(os.getenv("MAX_VY", "0.40")))
 MAX_VYAW = max(0.05, float(os.getenv("MAX_VYAW", "1.00")))

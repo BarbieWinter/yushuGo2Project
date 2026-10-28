@@ -18,8 +18,13 @@ API ID 与方法名的对应关系从 SDK 源码自动解析，不在本文件�
 import argparse
 import inspect
 import re
-import subprocess
+import sys
 import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
+
+from netiface import detect_robot_iface
 
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 from unitree_sdk2py.go2.sport import sport_api
@@ -27,22 +32,6 @@ from unitree_sdk2py.go2.sport.sport_client import SportClient
 
 MOVE_HOLD_SECONDS = 1.5   # Move 非零速度自动保持时长，之后自动 StopMove
 MOVE_HOLD_HZ = 20.0       # Move 保持期间的发送频率
-
-
-def detect_robot_iface():
-    """查找持有 192.168.123.x 地址的网卡。"""
-    try:
-        out = subprocess.run(["ifconfig"], capture_output=True, text=True, timeout=3).stdout
-    except (OSError, subprocess.SubprocessError):
-        return None
-    iface = None
-    for line in out.splitlines():
-        head = re.match(r"^([a-zA-Z0-9_.-]+):", line)
-        if head:
-            iface = head.group(1)
-        elif iface and re.search(r"inet 192\.168\.123\.\d+", line):
-            return iface
-    return None
 
 
 def build_api_map():

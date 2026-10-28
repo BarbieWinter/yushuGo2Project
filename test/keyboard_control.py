@@ -13,13 +13,16 @@
 """
 
 import argparse
-import re
 import select
-import subprocess
 import sys
 import termios
 import time
 import tty
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
+
+from netiface import detect_robot_iface
 
 from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
 from unitree_sdk2py.go2.obstacles_avoid.obstacles_avoid_client import ObstaclesAvoidClient
@@ -177,23 +180,6 @@ class KeyboardTeleop:
             code = self.sport.StopMove()
             print(f"[move] StopMove -> {code}")
             self.is_moving = False
-
-
-def detect_robot_iface():
-    """解析 ifconfig，返回持有 192.168.123.x 地址的网卡名。"""
-    try:
-        out = subprocess.run(["ifconfig"], capture_output=True, text=True, timeout=3).stdout
-    except (OSError, subprocess.SubprocessError):
-        return None
-    iface = None
-    for line in out.splitlines():
-        # 网卡块以 "en8:" 这类行开头，后续 inet 行属于该网卡
-        head = re.match(r"^([a-zA-Z0-9_.-]+):", line)
-        if head:
-            iface = head.group(1)
-        elif iface and re.search(r"inet 192\.168\.123\.\d+", line):
-            return iface
-    return None
 
 
 def read_initial_state(timeout: float = 2.0):

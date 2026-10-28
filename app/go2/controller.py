@@ -26,7 +26,7 @@ log = logging.getLogger("go2.rpc")
 class Go2Controller:
     def __init__(
         self,
-        interface: str,
+        interface: Optional[str],
         client=None,
         clock: Callable[[], float] = time.monotonic,
         heading: Optional[Callable[[], Optional[float]]] = None,

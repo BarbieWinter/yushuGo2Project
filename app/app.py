@@ -53,6 +53,11 @@ patrol = PatrolController(controller, state_reader, BASE_DIR / "patrol_path.json
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    if GO2_IFACE is None:
+        logging.getLogger(__name__).warning(
+            "未找到 192.168.123.x 网卡，DDS 将自行选择网卡；"
+            "连不上机器人时用 IFACE=<网卡名> make dev 指定"
+        )
     log_dir = BASE_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
     rpc_log = logging.getLogger("go2.rpc")

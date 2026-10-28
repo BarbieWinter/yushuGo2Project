@@ -12,13 +12,15 @@ make dev
 ```
 
 `make install` 会创建/复用 `.venv`，安装 `unitree_sdk2py`、应用依赖和测试依赖。
-`make dev` 自动查找持有 `192.168.123.x` 的网卡；找不到时显式指定：
+`make dev` 自动查找持有 `192.168.123.x` 地址的网卡：Windows 使用适配器别名
+（如 `以太网`、`Ethernet`），Linux/macOS 使用 `eth0`、`en8` 等接口名，换电脑
+不需要修改任何名称。需要换用其他网卡时再覆盖：
 
 ```bash
-IFACE=en8 make dev
+IFACE=<网卡名> make dev
 ```
 
-Windows 原生环境需要 Git Bash 或 MSYS2 提供 `sh`、`make`、`uv`，接口名用 `IFACE="Ethernet"` 覆盖。
+Windows 原生环境需要 Git Bash 或 MSYS2 提供 `sh`、`make`、`uv`。
 机器人 SDK 和 CycloneDDS 建议在 WSL2 中运行，WSL 内按 Linux 方式执行同样的 `make install` / `make dev`。
 
 `make start` 与 `make dev` 等价。
@@ -30,7 +32,7 @@ ssh -L 8000:127.0.0.1:8000 go2@ROBOT_IP
 ```
 
 遥控页 `/`，动作巡逻页 `/patrol`。仅在已有访问控制的可信网络中显式设置 `HOST=0.0.0.0 make dev`；应用没有账号认证。
-已有环境也可执行 `python3 -m uvicorn app:app --host 127.0.0.1 --port 8000`，兼容 `server:app`。
+已有环境也可执行 `python3 -m uvicorn app:app --host 127.0.0.1 --port 8000`，兼容 `server:app`；不设置 `GO2_IFACE` 时同样自动检测网卡。
 **只运行一个进程，不使用多个 Uvicorn workers 或开发热重载控制实机。**
 
 ## 控制行为

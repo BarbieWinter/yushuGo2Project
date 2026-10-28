@@ -100,7 +100,7 @@ def health(request: Request, response: Response) -> dict:
     response.status_code = status.HTTP_200_OK if ok else status.HTTP_503_SERVICE_UNAVAILABLE
     return {
         "ok": ok,
-        "interface": GO2_IFACE,
+        "interface": GO2_IFACE or "auto",
         "control": control_status,
         "limits": {"vx": MAX_VX, "vy": MAX_VY, "vyaw": MAX_VYAW},
         "telemetry": {
